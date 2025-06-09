@@ -24,6 +24,14 @@ export interface AppConfig {
   animation: {
     transitionSpeed: string;
   };
+  api: {
+    enabled: boolean;
+    baseUrl: string;
+    endpoints: {
+      memos: string;
+      tags: string;
+    };
+  };
 }
 
 export const defaultConfig: AppConfig = {
@@ -51,5 +59,13 @@ export const defaultConfig: AppConfig = {
   },
   animation: {
     transitionSpeed: '0.2s',
+  },
+  api: {
+    enabled: false,
+    baseUrl: 'http://localhost:8080',
+    endpoints: {
+      memos: '/api/memos',
+      tags: '/api/tags',
+    },
   },
 }; 

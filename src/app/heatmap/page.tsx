@@ -13,16 +13,14 @@ export default function HeatMapPage() {
 
   // 初始化数据
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       try {
-        const storedMemos = getMemos();
+        const storedMemos = await getMemos();
         setMemos(storedMemos);
       } catch (error) {
         console.error('加载数据失败:', error);
       } finally {
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 300);
+        setIsLoading(false);
       }
     };
     

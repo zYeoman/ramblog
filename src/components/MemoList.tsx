@@ -57,7 +57,7 @@ const MemoList: React.FC<MemoListProps> = ({
   );
 
   // 更新复选框状态
-  const toggleCheckbox = (memo: Memo, lineNumber: number, isChecked: boolean) => {
+  const toggleCheckbox = async (memo: Memo, lineNumber: number, isChecked: boolean) => {
     
       // 分割内容为行
       const lines = memo.content.split('\n');
@@ -69,7 +69,7 @@ const MemoList: React.FC<MemoListProps> = ({
       
       // 如果内容有变化，则更新备忘录
       if (updatedContent !== memo.content && onUpdateMemos) {
-        const updatedMemos = editMemo(memo.id, updatedContent, memo.tags);
+        const updatedMemos = await editMemo(memo.id, updatedContent, memo.tags);
         onUpdateMemos(updatedMemos);
       }
   };
@@ -200,7 +200,7 @@ const MemoList: React.FC<MemoListProps> = ({
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[[rehypeKatex, {output: 'mathml'}]]}
                   components={{
-                    code({ node, inline, className, children, ...props }: any) {
+                    code({ inline, className, children, ...props }: any) {
                       const match = /language-(\w+)/.exec(className || '');
                       return !inline && match ? (
                         <SyntaxHighlighter

@@ -37,3 +37,35 @@ yarn-error.log*
 next-env.d.ts
 dist
 .env
+
+# Go相关
+# 编译后的二进制文件
+/backend/backend
+/backend/memo-server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试二进制文件
+*.test
+
+# 输出文件
+*.out
+
+# Go依赖目录
+/vendor/
+
+# 数据目录
+/data/
+/backend/data/
+
+# IDE文件
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志文件
+*.log

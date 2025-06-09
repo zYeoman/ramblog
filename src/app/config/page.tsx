@@ -66,6 +66,35 @@ export default function ConfigPage() {
     });
   };
 
+  const handleApiChange = (key: string, value: any) => {
+    if (key === 'enabled') {
+      updateConfig({
+        api: {
+          ...config.api,
+          enabled: value,
+        },
+      });
+    } else if (key === 'baseUrl') {
+      updateConfig({
+        api: {
+          ...config.api,
+          baseUrl: value,
+        },
+      });
+    } else if (key.startsWith('endpoints.')) {
+      const endpointKey = key.split('.')[1] as keyof typeof config.api.endpoints;
+      updateConfig({
+        api: {
+          ...config.api,
+          endpoints: {
+            ...config.api.endpoints,
+            [endpointKey]: value,
+          },
+        },
+      });
+    }
+  };
+
   const handleToggleDarkMode = () => {
     updateConfig({
       theme: {
@@ -135,6 +164,12 @@ export default function ConfigPage() {
           onClick={() => setActiveTab('animation')}
         >
           动画
+        </button>
+        <button
+          className={`tab ${activeTab === 'api' ? 'active' : ''}`}
+          onClick={() => setActiveTab('api')}
+        >
+          API
         </button>
       </div>
 
@@ -332,11 +367,92 @@ export default function ConfigPage() {
             </div>
           </div>
         )}
+
+        {activeTab === 'api' && (
+          <div className="api-settings">
+            <div className="form-group">
+              <label htmlFor="apiEnabled">启用API</label>
+              <input
+                type="checkbox"
+                id="apiEnabled"
+                checked={config.api.enabled}
+                onChange={(e) => handleApiChange('enabled', e.target.checked)}
+              />
+              <p className="help-text">
+                启用后将使用API获取数据，而不是本地存储。请确保API服务器已正确配置。
+              </p>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="apiBaseUrl">API基础URL</label>
+              <input
+                type="text"
+                id="apiBaseUrl"
+                value={config.api.baseUrl}
+                onChange={(e) => handleApiChange('baseUrl', e.target.value)}
+                placeholder="例如: http://localhost:8080"
+              />
+              <p className="help-text">
+                API服务器的基础URL，不包含端点路径。
+              </p>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="apiMemoEndpoint">备忘录端点</label>
+              <input
+                type="text"
+                id="apiMemoEndpoint"
+                value={config.api.endpoints.memos}
+                onChange={(e) => handleApiChange('endpoints.memos', e.target.value)}
+                placeholder="例如: /api/memos"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="apiTagEndpoint">标签端点</label>
+              <input
+                type="text"
+                id="apiTagEndpoint"
+                value={config.api.endpoints.tags}
+                onChange={(e) => handleApiChange('endpoints.tags', e.target.value)}
+                placeholder="例如: /api/tags"
+              />
+            </div>
+
+            <div className="api-test">
+              <h3>API连接测试</h3>
+              <button
+                className="test-button"
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`${config.api.baseUrl}${config.api.endpoints.memos}`, {
+                      method: 'GET',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                    });
+                    
+                    if (response.ok) {
+                      alert('API连接成功！');
+                    } else {
+                      alert(`API连接失败: ${response.status} ${response.statusText}`);
+                    }
+                  } catch (error) {
+                    alert(`API连接失败: ${error instanceof Error ? error.message : '未知错误'}`);
+                  }
+                }}
+                disabled={!config.api.enabled}
+              >
+                测试连接
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="config-actions">
         <button className="reset-button" onClick={resetToDefault}>
-          重置为默认值
+          重置为默认配置
         </button>
         <button className="export-button" onClick={downloadConfig}>
           导出配置
@@ -348,131 +464,120 @@ export default function ConfigPage() {
           type="file"
           ref={fileInputRef}
           style={{ display: 'none' }}
-          accept=".json"
           onChange={handleFileChange}
+          accept=".json"
         />
       </div>
-
       {importError && <div className="error-message">{importError}</div>}
 
       <style jsx>{`
         .config-page {
-          max-width: var(--content-width);
+          max-width: 800px;
           margin: 0 auto;
-          padding: 2rem;
+          padding: 20px;
         }
-
+        
         .header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 2rem;
+          margin-bottom: 20px;
         }
-
+        
         .back-link {
+          color: ${config.theme.primaryColor};
           text-decoration: none;
-          padding: 0.5rem 1rem;
-          background-color: var(--primary-color);
-          color: white;
-          border-radius: 4px;
         }
-
+        
         .tabs {
           display: flex;
-          margin-bottom: 2rem;
+          margin-bottom: 20px;
           border-bottom: 1px solid #ddd;
         }
-
+        
         .tab {
-          padding: 0.75rem 1.5rem;
-          background: none;
+          padding: 10px 15px;
           border: none;
+          background: none;
           cursor: pointer;
-          font-size: 1rem;
-          position: relative;
+          font-size: 16px;
+          color: #666;
         }
-
+        
         .tab.active {
-          color: var(--primary-color);
+          color: ${config.theme.primaryColor};
+          border-bottom: 2px solid ${config.theme.primaryColor};
         }
-
-        .tab.active::after {
-          content: '';
-          position: absolute;
-          bottom: -1px;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background-color: var(--primary-color);
-        }
-
-        .tab-content {
-          margin-bottom: 2rem;
-        }
-
+        
         .form-group {
-          margin-bottom: 1.5rem;
+          margin-bottom: 20px;
         }
-
-        .form-group label {
+        
+        label {
           display: block;
-          margin-bottom: 0.5rem;
+          margin-bottom: 5px;
           font-weight: 500;
         }
-
-        .form-group input[type="text"] {
+        
+        input[type="text"] {
           width: 100%;
-          padding: 0.5rem;
+          padding: 8px;
           border: 1px solid #ddd;
           border-radius: 4px;
         }
-
+        
         .color-input {
           display: flex;
-          gap: 1rem;
+          align-items: center;
         }
-
-        .color-input input[type="color"] {
-          width: 50px;
+        
+        input[type="color"] {
+          margin-right: 10px;
+          width: 40px;
           height: 40px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
+          border: none;
+          cursor: pointer;
         }
-
-        .color-input input[type="text"] {
-          flex: 1;
-        }
-
+        
         .config-actions {
+          margin-top: 30px;
           display: flex;
-          gap: 1rem;
-          margin-top: 2rem;
+          gap: 10px;
         }
-
-        .config-actions button {
-          padding: 0.75rem 1.5rem;
+        
+        button {
+          padding: 8px 16px;
+          background-color: ${config.theme.primaryColor};
+          color: white;
           border: none;
           border-radius: 4px;
           cursor: pointer;
-          font-weight: 500;
         }
-
+        
         .reset-button {
-          background-color: #f3f4f6;
-          color: #374151;
+          background-color: #f44336;
         }
-
-        .export-button, .import-button {
-          background-color: var(--primary-color);
-          color: white;
-        }
-
+        
         .error-message {
-          margin-top: 1rem;
-          padding: 0.75rem;
-          background-color: #fee2e2;
-          color: #b91c1c;
-          border-radius: 4px;
+          color: #f44336;
+          margin-top: 10px;
+        }
+        
+        .help-text {
+          font-size: 14px;
+          color: #666;
+          margin-top: 5px;
+        }
+        
+        .api-test {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #ddd;
+        }
+        
+        .test-button {
+          background-color: ${config.api.enabled ? config.theme.secondaryColor : '#ccc'};
+          cursor: ${config.api.enabled ? 'pointer' : 'not-allowed'};
         }
       `}</style>
     </div>

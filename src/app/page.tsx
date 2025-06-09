@@ -29,19 +29,21 @@ export default function Home() {
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // 初始化数据
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       try {
-        const storedMemos = getMemos();
-        const storedTags = getTags();
+        const storedMemos = await getMemos();
+        const storedTags = await getTags();
         
         setMemos(storedMemos);
         setTags(storedTags); 
       } catch (error) {
         console.error('加载数据失败:', error);
       } finally {
+        setIsLoading(false);
       }
     };
     
@@ -96,11 +98,11 @@ export default function Home() {
   };
 
   // 添加新备忘录
-  const handleSaveMemo = (content: string, tagIds: string[]) => {
+  const handleSaveMemo = async (content: string, tagIds: string[]) => {
     try {
       if (editingMemo) {
         // 编辑现有备忘录
-        const updatedMemos = editMemo(editingMemo.id, content, tagIds);
+        const updatedMemos = await editMemo(editingMemo.id, content, tagIds);
         setMemos(updatedMemos);
         setEditingMemo(null);
       } else {
@@ -115,7 +117,7 @@ export default function Home() {
           isArchived: false
         };
         
-        const updatedMemos = addMemo(newMemo);
+        const updatedMemos = await addMemo(newMemo);
         setMemos(updatedMemos);
       }
     } catch (error) {
@@ -125,9 +127,9 @@ export default function Home() {
   };
 
   // 删除备忘录
-  const handleDeleteMemo = (id: string) => {
+  const handleDeleteMemo = async (id: string) => {
     try {
-      const updatedMemos = deleteMemo(id);
+      const updatedMemos = await deleteMemo(id);
       setMemos(updatedMemos);
     } catch (error) {
       console.error('删除备忘录失败:', error);
@@ -150,10 +152,10 @@ export default function Home() {
   };
 
   // 在模态框中保存备忘录
-  const handleSaveInModal = (content: string, tagIds: string[]) => {
+  const handleSaveInModal = async (content: string, tagIds: string[]) => {
     try {
       if (editingMemo) {
-        const updatedMemos = editMemo(editingMemo.id, content, tagIds);
+        const updatedMemos = await editMemo(editingMemo.id, content, tagIds);
         setMemos(updatedMemos);
       }
     } catch (error) {
@@ -163,9 +165,9 @@ export default function Home() {
   };
 
   // 置顶/取消置顶备忘录
-  const handleTogglePinMemo = (id: string) => {
+  const handleTogglePinMemo = async (id: string) => {
     try {
-      const updatedMemos = togglePinMemo(id);
+      const updatedMemos = await togglePinMemo(id);
       setMemos(updatedMemos);
     } catch (error) {
       console.error('置顶备忘录失败:', error);
@@ -173,9 +175,9 @@ export default function Home() {
   };
 
   // 归档/取消归档备忘录
-  const handleArchiveMemo = (id: string) => {
+  const handleArchiveMemo = async (id: string) => {
     try {
-      const updatedMemos = toggleArchiveMemo(id);
+      const updatedMemos = await toggleArchiveMemo(id);
       setMemos(updatedMemos);
     } catch (error) {
       console.error('归档备忘录失败:', error);
@@ -206,7 +208,16 @@ export default function Home() {
     return baseText;
   };
 
-
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto animate-spin"></div>
+          <p className="mt-4 text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
