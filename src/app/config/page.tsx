@@ -124,7 +124,7 @@ export default function ConfigPage() {
       }
     };
     reader.readAsText(file);
-    
+
     // 重置文件输入，以便同一文件可以再次选择
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -141,10 +141,7 @@ export default function ConfigPage() {
       </header>
 
       <div className="tabs">
-        <button
-          className={`tab ${activeTab === 'theme' ? 'active' : ''}`}
-          onClick={() => setActiveTab('theme')}
-        >
+        <button className={`tab ${activeTab === 'theme' ? 'active' : ''}`} onClick={() => setActiveTab('theme')}>
           主题
         </button>
         <button
@@ -153,10 +150,7 @@ export default function ConfigPage() {
         >
           排版
         </button>
-        <button
-          className={`tab ${activeTab === 'layout' ? 'active' : ''}`}
-          onClick={() => setActiveTab('layout')}
-        >
+        <button className={`tab ${activeTab === 'layout' ? 'active' : ''}`} onClick={() => setActiveTab('layout')}>
           布局
         </button>
         <button
@@ -165,10 +159,7 @@ export default function ConfigPage() {
         >
           动画
         </button>
-        <button
-          className={`tab ${activeTab === 'api' ? 'active' : ''}`}
-          onClick={() => setActiveTab('api')}
-        >
+        <button className={`tab ${activeTab === 'api' ? 'active' : ''}`} onClick={() => setActiveTab('api')}>
           API
         </button>
       </div>
@@ -246,12 +237,7 @@ export default function ConfigPage() {
 
             <div className="form-group">
               <label htmlFor="darkMode">深色模式</label>
-              <input
-                type="checkbox"
-                id="darkMode"
-                checked={config.theme.darkMode}
-                onChange={handleToggleDarkMode}
-              />
+              <input type="checkbox" id="darkMode" checked={config.theme.darkMode} onChange={handleToggleDarkMode} />
             </div>
           </div>
         )}
@@ -378,9 +364,7 @@ export default function ConfigPage() {
                 checked={config.api.enabled}
                 onChange={(e) => handleApiChange('enabled', e.target.checked)}
               />
-              <p className="help-text">
-                启用后将使用API获取数据，而不是本地存储。请确保API服务器已正确配置。
-              </p>
+              <p className="help-text">启用后将使用API获取数据，而不是本地存储。请确保API服务器已正确配置。</p>
             </div>
 
             <div className="form-group">
@@ -392,9 +376,7 @@ export default function ConfigPage() {
                 onChange={(e) => handleApiChange('baseUrl', e.target.value)}
                 placeholder="例如: http://localhost:8080"
               />
-              <p className="help-text">
-                API服务器的基础URL，不包含端点路径。
-              </p>
+              <p className="help-text">API服务器的基础URL，不包含端点路径。</p>
             </div>
 
             <div className="form-group">
@@ -431,7 +413,7 @@ export default function ConfigPage() {
                         'Content-Type': 'application/json',
                       },
                     });
-                    
+
                     if (response.ok) {
                       alert('API连接成功！');
                     } else {
@@ -460,13 +442,7 @@ export default function ConfigPage() {
         <button className="import-button" onClick={handleImportClick}>
           导入配置
         </button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileChange}
-          accept=".json"
-        />
+        <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} accept=".json" />
       </div>
       {importError && <div className="error-message">{importError}</div>}
 
@@ -476,25 +452,25 @@ export default function ConfigPage() {
           margin: 0 auto;
           padding: 20px;
         }
-        
+
         .header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 20px;
         }
-        
+
         .back-link {
           color: ${config.theme.primaryColor};
           text-decoration: none;
         }
-        
+
         .tabs {
           display: flex;
           margin-bottom: 20px;
           border-bottom: 1px solid #ddd;
         }
-        
+
         .tab {
           padding: 10px 15px;
           border: none;
@@ -503,48 +479,48 @@ export default function ConfigPage() {
           font-size: 16px;
           color: #666;
         }
-        
+
         .tab.active {
           color: ${config.theme.primaryColor};
           border-bottom: 2px solid ${config.theme.primaryColor};
         }
-        
+
         .form-group {
           margin-bottom: 20px;
         }
-        
+
         label {
           display: block;
           margin-bottom: 5px;
           font-weight: 500;
         }
-        
-        input[type="text"] {
+
+        input[type='text'] {
           width: 100%;
           padding: 8px;
           border: 1px solid #ddd;
           border-radius: 4px;
         }
-        
+
         .color-input {
           display: flex;
           align-items: center;
         }
-        
-        input[type="color"] {
+
+        input[type='color'] {
           margin-right: 10px;
           width: 40px;
           height: 40px;
           border: none;
           cursor: pointer;
         }
-        
+
         .config-actions {
           margin-top: 30px;
           display: flex;
           gap: 10px;
         }
-        
+
         button {
           padding: 8px 16px;
           background-color: ${config.theme.primaryColor};
@@ -553,28 +529,28 @@ export default function ConfigPage() {
           border-radius: 4px;
           cursor: pointer;
         }
-        
+
         .reset-button {
           background-color: #f44336;
         }
-        
+
         .error-message {
           color: #f44336;
           margin-top: 10px;
         }
-        
+
         .help-text {
           font-size: 14px;
           color: #666;
           margin-top: 5px;
         }
-        
+
         .api-test {
           margin-top: 30px;
           padding-top: 20px;
           border-top: 1px solid #ddd;
         }
-        
+
         .test-button {
           background-color: ${config.api.enabled ? config.theme.secondaryColor : '#ccc'};
           cursor: ${config.api.enabled ? 'pointer' : 'not-allowed'};
@@ -582,4 +558,4 @@ export default function ConfigPage() {
       `}</style>
     </div>
   );
-} 
+}

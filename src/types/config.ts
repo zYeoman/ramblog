@@ -68,4 +68,4 @@ export const defaultConfig: AppConfig = {
       tags: '/api/tags',
     },
   },
-}; 
+};

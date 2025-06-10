@@ -17,4 +17,4 @@ export interface Tag {
 export interface HeatmapValue {
   date: string;
   count: number;
-} 
+}

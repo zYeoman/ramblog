@@ -36,7 +36,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           font-size: var(--font-size-base);
           line-height: var(--line-height);
           color: var(--text-color);
-          background-color: var(--background-color);
+          background: var(--background-color);
           transition: background-color var(--transition-speed), color var(--transition-speed);
         }
 
@@ -68,4 +68,4 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       {children}
     </>
   );
-}; 
+};

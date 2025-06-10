@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiClock, FiX, FiEdit, FiStar, FiArchive, FiCheckCircle, FiCircle } from 'react-icons/fi';
+import { FiClock, FiX, FiEdit, FiStar, FiArchive, FiCheckCircle, FiCircle, FiFileText } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -22,27 +22,25 @@ interface MemoListProps {
   onUpdateMemos?: (memos: Memo[]) => void;
 }
 
-const MemoList: React.FC<MemoListProps> = ({ 
-  memos, 
-  tags, 
+const MemoList: React.FC<MemoListProps> = ({
+  memos,
+  tags,
   onDeleteMemo,
   onEditMemo,
   onTogglePinMemo,
   onArchiveMemo,
-  onUpdateMemos
+  onUpdateMemos,
 }) => {
   // 获取标签对象，通过ID
   const getTagById = (id: string) => {
-    return tags.find(tag => tag.id === id);
+    return tags.find((tag) => tag.id === id);
   };
 
   // 自定义复选框组件
-  const CustomCheckbox = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
-    <span 
+  const CustomCheckbox = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
+    <span
       className={`inline-flex justify-center items-center w-4 h-4 mr-2 rounded cursor-pointer transition-all mt-1 ${
-        checked 
-          ? 'text-blue-500' 
-          : 'text-gray-300'
+        checked ? 'text-blue-500' : 'text-gray-300'
       }`}
       onClick={(e) => {
         e.preventDefault();
@@ -50,40 +48,35 @@ const MemoList: React.FC<MemoListProps> = ({
         onChange();
       }}
     >
-      {checked && (
-        <FiCheckCircle className="w-4 h-4" />
-      )||<FiCircle className="w-4 h-4" />}
+      {(checked && <FiCheckCircle className="w-4 h-4" />) || <FiCircle className="w-4 h-4" />}
     </span>
   );
 
   // 更新复选框状态
   const toggleCheckbox = async (memo: Memo, lineNumber: number, isChecked: boolean) => {
-    
-      // 分割内容为行
-      const lines = memo.content.split('\n');
+    // 分割内容为行
+    const lines = memo.content.split('\n');
 
-      lines[lineNumber-1] = lines[lineNumber-1].replace(/\[\s*[xX ]?\s*\]/, isChecked ? '[x]' : '[ ]');
-      
-      // 合并回完整内容
-      const updatedContent = lines.join('\n');
-      
-      // 如果内容有变化，则更新备忘录
-      if (updatedContent !== memo.content && onUpdateMemos) {
-        const updatedMemos = await editMemo(memo.id, updatedContent, memo.tags);
-        onUpdateMemos(updatedMemos);
-      }
+    lines[lineNumber - 1] = lines[lineNumber - 1].replace(/\[\s*[xX ]?\s*\]/, isChecked ? '[x]' : '[ ]');
+
+    // 合并回完整内容
+    const updatedContent = lines.join('\n');
+
+    // 如果内容有变化，则更新备忘录
+    if (updatedContent !== memo.content && onUpdateMemos) {
+      const updatedMemos = await editMemo(memo.id, updatedContent, memo.tags);
+      onUpdateMemos(updatedMemos);
+    }
   };
 
   if (memos.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="bg-white rounded-lg p-12 text-center text-gray-500 shadow-sm"
       >
-        <svg className="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
+        <FiFileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
         <p className="text-lg">没有找到备忘录</p>
         <p className="text-sm mt-2">开始写下你的第一条备忘录吧</p>
       </motion.div>
@@ -91,30 +84,26 @@ const MemoList: React.FC<MemoListProps> = ({
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-4"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
       <AnimatePresence>
         {memos.map((memo, index) => (
-          <motion.div 
+          <motion.div
             key={memo.id}
             initial={{ opacity: 0, y: -20 }}
-            animate={{ 
-              opacity: 1, 
+            animate={{
+              opacity: 1,
               y: 0,
-              transition: { 
+              transition: {
                 delay: index * 0.05,
-                type: "spring",
-                stiffness: 100
-              }
+                type: 'spring',
+                stiffness: 100,
+              },
             }}
             exit={{ opacity: 0, scale: 0.95 }}
-            whileHover={{ 
+            whileHover={{
               y: -3,
-              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-              transition: { duration: 0.2 }
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              transition: { duration: 0.2 },
             }}
             className={`bg-white rounded-lg shadow-sm ${memo.isPinned ? 'border-l-4 border-blue-500' : ''}`}
           >
@@ -141,10 +130,10 @@ const MemoList: React.FC<MemoListProps> = ({
                     <motion.button
                       onClick={() => onEditMemo(memo.id)}
                       className="text-gray-400 p-1 rounded-full hover:bg-gray-100"
-                      whileHover={{ 
-                        scale: 1.2, 
-                        color: "#3b82f6",
-                        transition: { duration: 0.2 }
+                      whileHover={{
+                        scale: 1.2,
+                        color: '#3b82f6',
+                        transition: { duration: 0.2 },
                       }}
                       aria-label="编辑备忘录"
                     >
@@ -154,13 +143,15 @@ const MemoList: React.FC<MemoListProps> = ({
                   {onTogglePinMemo && (
                     <motion.button
                       onClick={() => onTogglePinMemo(memo.id)}
-                      className={`p-1 rounded-full hover:bg-gray-100 ${memo.isPinned ? 'text-blue-500' : 'text-gray-400'}`}
-                      whileHover={{ 
-                        scale: 1.2, 
-                        color: memo.isPinned ? "#3b82f6" : "#3b82f6",
-                        transition: { duration: 0.2 }
+                      className={`p-1 rounded-full hover:bg-gray-100 ${
+                        memo.isPinned ? 'text-blue-500' : 'text-gray-400'
+                      }`}
+                      whileHover={{
+                        scale: 1.2,
+                        color: memo.isPinned ? '#3b82f6' : '#3b82f6',
+                        transition: { duration: 0.2 },
                       }}
-                      aria-label={memo.isPinned ? "取消置顶" : "置顶备忘录"}
+                      aria-label={memo.isPinned ? '取消置顶' : '置顶备忘录'}
                     >
                       <FiStar className="h-4 w-4" />
                     </motion.button>
@@ -168,13 +159,15 @@ const MemoList: React.FC<MemoListProps> = ({
                   {onArchiveMemo && (
                     <motion.button
                       onClick={() => onArchiveMemo(memo.id)}
-                      className={`p-1 rounded-full hover:bg-gray-100 ${memo.isArchived ? 'text-gray-600' : 'text-gray-400'}`}
-                      whileHover={{ 
-                        scale: 1.2, 
-                        color: memo.isArchived ? "#4b5563" : "#4b5563",
-                        transition: { duration: 0.2 }
+                      className={`p-1 rounded-full hover:bg-gray-100 ${
+                        memo.isArchived ? 'text-gray-600' : 'text-gray-400'
+                      }`}
+                      whileHover={{
+                        scale: 1.2,
+                        color: memo.isArchived ? '#4b5563' : '#4b5563',
+                        transition: { duration: 0.2 },
                       }}
-                      aria-label={memo.isArchived ? "取消归档" : "归档备忘录"}
+                      aria-label={memo.isArchived ? '取消归档' : '归档备忘录'}
                     >
                       <FiArchive className="h-4 w-4" />
                     </motion.button>
@@ -183,10 +176,10 @@ const MemoList: React.FC<MemoListProps> = ({
                     <motion.button
                       onClick={() => onDeleteMemo(memo.id)}
                       className="text-gray-400 p-1 rounded-full hover:bg-gray-100"
-                      whileHover={{ 
-                        scale: 1.2, 
-                        color: "#ef4444",
-                        transition: { duration: 0.2 }
+                      whileHover={{
+                        scale: 1.2,
+                        color: '#ef4444',
+                        transition: { duration: 0.2 },
                       }}
                       aria-label="删除备忘录"
                     >
@@ -196,9 +189,9 @@ const MemoList: React.FC<MemoListProps> = ({
                 </div>
               </div>
               <div className="mt-3 text-gray-800 markdown-body">
-                <ReactMarkdown 
+                <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkMath]}
-                  rehypePlugins={[[rehypeKatex, {output: 'mathml'}]]}
+                  rehypePlugins={[[rehypeKatex, { output: 'mathml' }]]}
                   components={{
                     code({ inline, className, children, ...props }: any) {
                       const match = /language-(\w+)/.exec(className || '');
@@ -239,46 +232,41 @@ const MemoList: React.FC<MemoListProps> = ({
                             });
                           }
                         });
-                        
+
                         // 创建一个过滤掉checkbox的子元素数组
                         const filteredChildren = children.map((child: any) => {
                           if (child.type === 'p' && child.props.children.length > 0) {
                             // 为p元素创建一个新的React元素，带有过滤后的子元素
                             return React.cloneElement(child, {
                               ...child.props,
-                              children: child.props.children.filter((c: any) => 
-                                c.type !== 'input' || c.props.type !== 'checkbox'
-                              )
+                              children: child.props.children.filter(
+                                (c: any) => c.type !== 'input' || c.props.type !== 'checkbox'
+                              ),
                             });
                           }
                           return child;
                         });
-                        const inputChildren = filteredChildren.filter((child: any) => child.type !== 'input' || child.props.type !== 'checkbox');
-                        
+                        const inputChildren = filteredChildren.filter(
+                          (child: any) => child.type !== 'input' || child.props.type !== 'checkbox'
+                        );
+
                         return (
-                          <li {...props} className="task-list-item flex items-start list-none ml-0 pl-0">
-                            <CustomCheckbox 
-                              checked={isChecked} 
-                              onChange={() => toggleCheckbox(memo, node.position.start.line, !isChecked)} 
+                          <div {...props} className="task-list-item flex items-start list-none ml-0 pl-0">
+                            <CustomCheckbox
+                              checked={isChecked}
+                              onChange={() => toggleCheckbox(memo, node.position.start.line, !isChecked)}
                             />
-                            <span 
-                              className={`${isChecked ? 'line-through text-gray-400' : ''}`}
-                            >
-                              {inputChildren}
-                            </span>
-                          </li>
+                            <span className={`${isChecked ? 'line-through text-gray-400' : ''}`}>{inputChildren}</span>
+                          </div>
                         );
                       }
                       // 处理普通列表项，去掉原生li的项目符号，改用span模拟
                       return (
-                        <div className="flex items-start my-1">
-                          <span className="inline-flex justify-center items-center w-4 h-4 mr-2 mt-1">
-                            <span className="w-2 h-2 rounded-full bg-gray-500"></span>
-                          </span>
-                          <span>{children}</span>
-                        </div>
+                        <li className={className} {...props}>
+                          {children}
+                        </li>
                       );
-                    }
+                    },
                   }}
                 >
                   {memo.content}
@@ -289,7 +277,7 @@ const MemoList: React.FC<MemoListProps> = ({
                   {memo.tags.map((tagId) => {
                     const tag = getTagById(tagId);
                     if (!tag) return null;
-                    
+
                     return (
                       <motion.span
                         key={tag.id}
@@ -312,4 +300,4 @@ const MemoList: React.FC<MemoListProps> = ({
   );
 };
 
-export default MemoList; 
+export default MemoList;

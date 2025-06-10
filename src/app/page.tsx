@@ -3,19 +3,19 @@
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Link from 'next/link';
-import { format, parseISO} from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import MonthCalendar from '../components/MonthCalendar';
 import TagSelector from '../components/TagSelector';
 import MemoList from '../components/MemoList';
 import MemoEditor from '../components/MemoEditor';
 import { Memo, Tag } from '../types';
-import { 
-  getMemos, 
-  getTags, 
-  addMemo, 
-  deleteMemo, 
-  editMemo, 
-  togglePinMemo, 
+import {
+  getMemos,
+  getTags,
+  addMemo,
+  deleteMemo,
+  editMemo,
+  togglePinMemo,
   toggleArchiveMemo,
 } from '../utils/storageUtils';
 import { FiArchive, FiArrowRight, FiX, FiSettings } from 'react-icons/fi';
@@ -37,53 +37,47 @@ export default function Home() {
       try {
         const storedMemos = await getMemos();
         const storedTags = await getTags();
-        
+
         setMemos(storedMemos);
-        setTags(storedTags); 
+        setTags(storedTags);
       } catch (error) {
         console.error('加载数据失败:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
   }, []);
 
   // 当备忘录、选定的标签或日期发生变化时，过滤备忘录
   useEffect(() => {
     let filtered = [...memos];
-    
+
     // 过滤归档的备忘录
     if (!showArchived) {
-      filtered = filtered.filter(memo => !memo.isArchived);
+      filtered = filtered.filter((memo) => !memo.isArchived);
     }
-    
+
     // 按标签筛选
     if (selectedTags.length > 0) {
-      filtered = filtered.filter(memo => 
-        memo.tags.some(tagId => selectedTags.includes(tagId))
-      );
+      filtered = filtered.filter((memo) => memo.tags.some((tagId) => selectedTags.includes(tagId)));
     }
-    
+
     // 按日期筛选
     if (selectedDate) {
-      filtered = filtered.filter(memo => {
+      filtered = filtered.filter((memo) => {
         const memoDate = memo.createdAt.split('T')[0];
         return memoDate === selectedDate;
       });
     }
-    
+
     setFilteredMemos(filtered);
   }, [memos, selectedTags, selectedDate, showArchived]);
 
   // 处理标签选择
   const handleTagSelect = (tagId: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) 
-        ? prev.filter(id => id !== tagId) 
-        : [...prev, tagId]
-    );
+    setSelectedTags((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]));
   };
 
   // 处理日期选择
@@ -114,9 +108,9 @@ export default function Home() {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           isPinned: false,
-          isArchived: false
+          isArchived: false,
         };
-        
+
         const updatedMemos = await addMemo(newMemo);
         setMemos(updatedMemos);
       }
@@ -138,7 +132,7 @@ export default function Home() {
 
   // 编辑备忘录 - 打开模态框
   const handleEditMemo = (id: string) => {
-    const memo = memos.find(memo => memo.id === id);
+    const memo = memos.find((memo) => memo.id === id);
     if (memo) {
       setEditingMemo(memo);
       setIsModalOpen(true);
@@ -186,13 +180,13 @@ export default function Home() {
 
   // 切换显示归档备忘录
   const toggleShowArchived = () => {
-    setShowArchived(prev => !prev);
+    setShowArchived((prev) => !prev);
   };
 
   // 获取筛选状态文本
   const getFilterStatusText = () => {
     let baseText = '';
-    
+
     if (selectedDate && selectedTags.length > 0) {
       const formattedDate = format(parseISO(selectedDate), 'yyyy年MM月dd日');
       baseText = `${formattedDate} + ${selectedTags.length}个标签 (${filteredMemos.length}条)`;
@@ -204,7 +198,7 @@ export default function Home() {
     } else {
       baseText = `${showArchived ? '所有' : '活跃'}备忘录 (${filteredMemos.length})`;
     }
-    
+
     return baseText;
   };
 
@@ -227,14 +221,10 @@ export default function Home() {
           <div className="w-full lg:w-1/3 lg:pr-6">
             <div className="lg:sticky lg:top-8 space-y-6">
               {/* 标题区域 */}
-              <div className="mb-6 animate-slide-in-top">
+              <div className="mb-6">
                 <div className="flex justify-between items-center">
                   <h1 className="text-3xl font-bold text-gray-800">ramblog</h1>
-                  <Link 
-                    href="/config" 
-                    className="text-gray-500 hover:text-blue-500 transition-colors"
-                    title="应用配置"
-                  >
+                  <Link href="/config" className="text-gray-500 hover:text-blue-500 transition-colors" title="应用配置">
                     <FiSettings className="w-5 h-5" />
                   </Link>
                 </div>
@@ -243,53 +233,38 @@ export default function Home() {
 
               <div>
                 <div className="flex justify-end items-center mb-3">
-                  <Link 
-                    href="/heatmap" 
-                    className="text-sm text-blue-500 hover:text-blue-700 flex"
-                  >
+                  <Link href="/heatmap" className="text-sm text-blue-500 hover:text-blue-700 flex">
                     <span>查看热力图</span>
                     <FiArrowRight className="w-4 h-4 ml-1" />
                   </Link>
                 </div>
-                <MonthCalendar 
-                  memos={memos} 
-                  onDateClick={handleDateClick} 
-                  selectedDate={selectedDate} 
-                />
+                <MonthCalendar memos={memos} onDateClick={handleDateClick} selectedDate={selectedDate} />
               </div>
-              
-              <TagSelector
-                tags={tags}
-                selectedTags={selectedTags}
-                onTagSelect={handleTagSelect}
-              />
+
+              <TagSelector tags={tags} selectedTags={selectedTags} onTagSelect={handleTagSelect} />
             </div>
           </div>
-          
+
           {/* 分割线 - 仅在大屏幕上显示 */}
           <div className="hidden lg:block border-l border-gray-200 mx-2"></div>
-          
+
           {/* 主内容区 */}
           <div className="w-full lg:w-2/3 lg:pl-6 space-y-6 mt-6 lg:mt-0">
-            <MemoEditor 
-              tags={tags} 
-              onSave={handleSaveMemo} 
-              editingMemo={null}
-            />
-            
+            <MemoEditor tags={tags} onSave={handleSaveMemo} editingMemo={null} />
+
             <div className="bg-white rounded-lg p-4 shadow-sm flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-800">
-                {getFilterStatusText()}
-              </h2>
+              <h2 className="text-lg font-medium text-gray-800">{getFilterStatusText()}</h2>
               <div className="flex items-center space-x-3">
                 <button
                   onClick={toggleShowArchived}
-                  className={`text-sm ${showArchived ? 'text-blue-600' : 'text-gray-500'} hover:text-blue-700 flex items-center`}
+                  className={`text-sm ${
+                    showArchived ? 'text-blue-600' : 'text-gray-500'
+                  } hover:text-blue-700 flex items-center`}
                 >
                   <FiArchive className="w-4 h-4 mr-1" />
                   {showArchived ? '隐藏归档' : '显示归档'}
                 </button>
-                
+
                 {(selectedTags.length > 0 || selectedDate) && (
                   <button
                     onClick={clearAllFilters}
@@ -301,7 +276,7 @@ export default function Home() {
                 )}
               </div>
             </div>
-            
+
             <MemoList
               memos={filteredMemos}
               tags={tags}
@@ -326,4 +301,4 @@ export default function Home() {
       />
     </main>
   );
-} 
+}

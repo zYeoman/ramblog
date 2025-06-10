@@ -13,14 +13,14 @@ interface MemoEditorProps {
   onClose?: () => void;
 }
 
-const MemoEditor: React.FC<MemoEditorProps> = ({ 
-  tags, 
-  onSave, 
-  editingMemo, 
+const MemoEditor: React.FC<MemoEditorProps> = ({
+  tags,
+  onSave,
+  editingMemo,
   onCancelEdit,
   isModal = false,
   isOpen = true,
-  onClose
+  onClose,
 }) => {
   const [content, setContent] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -34,7 +34,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
     if (editingMemo) {
       setContent(editingMemo.content);
       setSelectedTags(editingMemo.tags);
-      
+
       // 聚焦到文本区域
       setTimeout(() => {
         if (textareaRef.current) {
@@ -59,7 +59,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
   // 点击外部关闭模态框（仅在模态框模式下）
   useEffect(() => {
     if (!isModal) return;
-    
+
     const handleClickOutside = (event: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         if (onClose) onClose();
@@ -78,7 +78,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
   // 按ESC关闭模态框（仅在模态框模式下）
   useEffect(() => {
     if (!isModal) return;
-    
+
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         if (onClose) onClose();
@@ -95,38 +95,34 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
   }, [isModal, isOpen, onClose]);
 
   const handleTagToggle = (tagId: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) 
-        ? prev.filter(id => id !== tagId) 
-        : [...prev, tagId]
-    );
+    setSelectedTags((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (content.trim()) {
       setIsSubmitting(true);
-      
+
       // 添加一个短暂的延迟，让动画效果更明显
       setTimeout(() => {
         onSave(content, selectedTags);
-        
+
         // 显示成功动画
         setShowSuccess(true);
-        
+
         // 如果不是编辑模式且不是模态框，则清空表单
         if (!editingMemo && !isModal) {
           setContent('');
           setSelectedTags([]);
         }
-        
+
         setIsSubmitting(false);
-        
+
         // 成功后的操作
         setTimeout(() => {
           setShowSuccess(false);
-          
+
           // 如果是模态框，则关闭
           if (isModal && onClose) {
             onClose();
@@ -152,9 +148,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
       <div className={`${isModal ? 'p-6 overflow-y-auto flex-grow' : 'p-6'}`}>
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center">
-            <h3 className="text-lg font-medium text-gray-800">
-              {editingMemo ? '编辑备忘录' : '添加备忘录'}
-            </h3>
+            <h3 className="text-lg font-medium text-gray-800">{editingMemo ? '编辑备忘录' : '添加备忘录'}</h3>
           </div>
           {((editingMemo && onCancelEdit && !isModal) || (isModal && onClose)) && (
             <motion.button
@@ -168,7 +162,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             </motion.button>
           )}
         </div>
-        
+
         <div className="mb-4 relative">
           <textarea
             ref={textareaRef}
@@ -179,16 +173,16 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             rows={4}
             disabled={isSubmitting}
           />
-          
+
           <AnimatePresence>
             {showSuccess && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 rounded-lg"
               >
-                <motion.div 
+                <motion.div
                   className="text-green-500 flex items-center"
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 1, repeat: 1 }}
@@ -200,9 +194,9 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             )}
           </AnimatePresence>
         </div>
-        
+
         {tags.length > 0 && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -233,22 +227,19 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
                 >
                   <div className="flex items-center">
                     {selectedTags.includes(tag.id) ? (
-                      <motion.svg 
+                      <motion.svg
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-2.5 h-2.5 mr-1" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24" 
+                        className="w-2.5 h-2.5 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
                       </motion.svg>
                     ) : (
-                      <span 
-                        className="w-2.5 h-2.5 mr-1 rounded-full" 
-                        style={{ backgroundColor: tag.color }}
-                      ></span>
+                      <span className="w-2.5 h-2.5 mr-1 rounded-full" style={{ backgroundColor: tag.color }}></span>
                     )}
                     {tag.name}
                   </div>
@@ -258,7 +249,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
           </motion.div>
         )}
       </div>
-      
+
       {/* 模态框底部按钮 */}
       {isModal && (
         <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
@@ -271,25 +262,33 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
           >
             取消
           </motion.button>
-          
+
           <motion.button
             type="submit"
             disabled={!content.trim() || isSubmitting}
             className={`px-5 py-2 rounded-lg text-white flex items-center ${
               content.trim() && !isSubmitting ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300 cursor-not-allowed'
             }`}
-            whileHover={content.trim() && !isSubmitting ? { y: -2, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" } : {}}
+            whileHover={
+              content.trim() && !isSubmitting ? { y: -2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } : {}
+            }
             whileTap={content.trim() && !isSubmitting ? { scale: 0.98 } : {}}
           >
             {isSubmitting ? (
               <span className="flex items-center">
                 <motion.span
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   className="mr-2 inline-block"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 9.27455 20.9097 6.80375 19.1414 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path
+                      d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 9.27455 20.9097 6.80375 19.1414 5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </motion.span>
                 保存中...
@@ -303,7 +302,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
           </motion.button>
         </div>
       )}
-      
+
       {/* 非模态框保存按钮 - 位于整个编辑框内部的右下角 */}
       {!isModal && (
         <motion.button
@@ -312,18 +311,24 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
           className={`absolute bottom-4 right-4 px-4 py-2 rounded-lg text-white flex items-center shadow-sm ${
             content.trim() && !isSubmitting ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300 cursor-not-allowed'
           }`}
-          whileHover={content.trim() && !isSubmitting ? { y: -2, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" } : {}}
+          whileHover={content.trim() && !isSubmitting ? { y: -2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } : {}}
           whileTap={content.trim() && !isSubmitting ? { scale: 0.98 } : {}}
         >
           {isSubmitting ? (
             <span className="flex items-center">
               <motion.span
                 animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 className="mr-2 inline-block"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 9.27455 20.9097 6.80375 19.1414 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path
+                    d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 9.27455 20.9097 6.80375 19.1414 5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </motion.span>
               保存中...
@@ -355,12 +360,10 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: "spring", damping: 15 }}
+              transition={{ type: 'spring', damping: 15 }}
               className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
             >
-              <form onSubmit={handleSubmit}>
-                {editorContent}
-              </form>
+              <form onSubmit={handleSubmit}>{editorContent}</form>
             </motion.div>
           </motion.div>
         )}
@@ -370,11 +373,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
 
   // 常规编辑器模式
   return (
-    <motion.form 
-      onSubmit={handleSubmit} 
+    <motion.form
+      onSubmit={handleSubmit}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 100 }}
+      transition={{ type: 'spring', stiffness: 100 }}
       className="bg-white rounded-lg shadow-sm mb-6 overflow-hidden relative"
     >
       {editorContent}
@@ -382,4 +385,4 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
   );
 };
 
-export default MemoEditor; 
+export default MemoEditor;

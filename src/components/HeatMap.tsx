@@ -15,7 +15,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ memos, months = 4 }) => {
   const { startDate, endDate } = getLastNMonthsRange(months);
   const heatmapData = getMemoHeatmapData(memos);
   const maxCount = getMaxCount(heatmapData);
-  
+
   // 计算热力图颜色强度
   const getColorScale = (count: number) => {
     if (count === 0) return 'color-empty';
@@ -24,13 +24,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ memos, months = 4 }) => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className="w-full mb-8"
     >
-      <motion.div 
+      <motion.div
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
@@ -39,19 +39,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ memos, months = 4 }) => {
         <FiCalendar className="mr-2 text-blue-500" />
         <h3 className="text-xl font-medium text-gray-800">活动热力图</h3>
       </motion.div>
-      
-      <motion.div 
+
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         className="bg-white rounded-lg p-6 shadow-sm"
       >
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="pb-4"
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="pb-4">
           <CalendarHeatmap
             startDate={startDate}
             endDate={endDate}
@@ -71,8 +66,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ memos, months = 4 }) => {
             }}
           />
         </motion.div>
-        
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
@@ -92,7 +87,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ memos, months = 4 }) => {
           </div>
         </motion.div>
       </motion.div>
-      
+
       <style jsx>{`
         :global(.react-calendar-heatmap) {
           width: 100%;
@@ -132,4 +127,4 @@ const HeatMap: React.FC<HeatMapProps> = ({ memos, months = 4 }) => {
   );
 };
 
-export default HeatMap; 
+export default HeatMap;

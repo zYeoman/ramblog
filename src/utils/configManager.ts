@@ -71,13 +71,13 @@ export class ConfigManager {
     const configJson = this.exportConfig();
     const blob = new Blob([configJson], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    
+
     const a = document.createElement('a');
     a.href = url;
     a.download = 'ramblog-config.json';
     document.body.appendChild(a);
     a.click();
-    
+
     // 清理
     setTimeout(() => {
       document.body.removeChild(a);
@@ -92,7 +92,7 @@ export class ConfigManager {
     if (typeof window === 'undefined') {
       return { ...defaultConfig };
     }
-    
+
     try {
       const storedConfig = localStorage.getItem(CONFIG_STORAGE_KEY);
       if (storedConfig) {
@@ -101,7 +101,7 @@ export class ConfigManager {
     } catch (error) {
       console.error('加载配置失败:', error);
     }
-    
+
     return { ...defaultConfig };
   }
 
@@ -112,7 +112,7 @@ export class ConfigManager {
     if (typeof window === 'undefined') {
       return;
     }
-    
+
     try {
       localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.config));
     } catch (error) {
@@ -125,12 +125,12 @@ export class ConfigManager {
    */
   private mergeConfigs(baseConfig: AppConfig, overrideConfig: Partial<any>): AppConfig {
     const merged = { ...baseConfig };
-    
+
     // 递归合并对象
     const mergeObjects = (target: any, source: any) => {
       if (!source) return target;
-      
-      Object.keys(source).forEach(key => {
+
+      Object.keys(source).forEach((key) => {
         if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
           if (target[key] === undefined) {
             target[key] = {};
@@ -140,10 +140,10 @@ export class ConfigManager {
           target[key] = source[key];
         }
       });
-      
+
       return target;
     };
-    
+
     return mergeObjects(merged, overrideConfig);
   }
-} 
+}
