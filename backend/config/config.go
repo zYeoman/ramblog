@@ -56,7 +56,7 @@ func LoadConfig() *Config {
 
 		// 如果找不到，默认使用 ../out
 		if staticDir == "" {
-			staticDir = "../out"
+			staticDir = "./"
 		}
 	}
 
@@ -65,4 +65,5 @@ func LoadConfig() *Config {
 		DataDir:    dataDir,
 		StaticDir:  staticDir,
 	}
-} 
+}
+

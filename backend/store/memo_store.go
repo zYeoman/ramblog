@@ -241,7 +241,7 @@ func (s *MemoStore) ListMemos() ([]*Memo, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	var memos []*Memo
+	memos := []*Memo{}
 
 	// 读取memos目录中的所有文件
 	err := filepath.WalkDir(s.getMemosDir(), func(path string, d fs.DirEntry, err error) error {
@@ -314,14 +314,14 @@ func (s *MemoStore) saveMemoToFile(memo *Memo) error {
 func parseMemoFile(data []byte, id string) (*Memo, error) {
 	// 检查YAML前置元数据分隔符
 	const yamlSeparator = "---"
-	
+
 	scanner := bufio.NewScanner(bytes.NewReader(data))
-	
+
 	// 第一行必须是分隔符
 	if !scanner.Scan() || scanner.Text() != yamlSeparator {
 		return nil, errors.New("无效的memo文件格式: 缺少YAML前置元数据开始分隔符")
 	}
-	
+
 	// 读取YAML内容直到下一个分隔符
 	var yamlContent strings.Builder
 	for scanner.Scan() {
@@ -332,28 +332,28 @@ func parseMemoFile(data []byte, id string) (*Memo, error) {
 		yamlContent.WriteString(line)
 		yamlContent.WriteString("\n")
 	}
-	
+
 	if scanner.Err() != nil {
 		return nil, fmt.Errorf("读取YAML元数据失败: %w", scanner.Err())
 	}
-	
+
 	// 解析YAML元数据
 	var metadata MemoMetadata
 	if err := yaml.Unmarshal([]byte(yamlContent.String()), &metadata); err != nil {
 		return nil, fmt.Errorf("解析YAML元数据失败: %w", err)
 	}
-	
+
 	// 读取剩余内容作为memo内容
 	var content strings.Builder
 	for scanner.Scan() {
 		content.WriteString(scanner.Text())
 		content.WriteString("\n")
 	}
-	
+
 	if scanner.Err() != nil {
 		return nil, fmt.Errorf("读取memo内容失败: %w", scanner.Err())
 	}
-	
+
 	// 创建Memo对象
 	return &Memo{
 		ID:        metadata.ID,
@@ -375,13 +375,13 @@ func formatMemoFile(memo *Memo) ([]byte, error) {
 		CreatedAt: memo.CreatedAt,
 		UpdatedAt: memo.UpdatedAt,
 	}
-	
+
 	// 序列化元数据为YAML
 	yamlData, err := yaml.Marshal(metadata)
 	if err != nil {
 		return nil, fmt.Errorf("序列化YAML元数据失败: %w", err)
 	}
-	
+
 	// 组合文件内容
 	var content strings.Builder
 	content.WriteString("---\n")
@@ -389,6 +389,7 @@ func formatMemoFile(memo *Memo) ([]byte, error) {
 	content.WriteString("---\n\n")
 	content.WriteString(memo.Content)
 	content.WriteString("\n")
-	
+
 	return []byte(content.String()), nil
-} 
+}
+
