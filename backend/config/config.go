@@ -42,6 +42,7 @@ func LoadConfig() *Config {
 	if staticDir == "" {
 		// 尝试找到out目录
 		possibleDirs := []string{
+			"./static",
 			"../out",    // 相对于backend目录
 			"./out",     // 相对于当前目录
 			"../../out", // 再上一级
@@ -66,4 +67,3 @@ func LoadConfig() *Config {
 		StaticDir:  staticDir,
 	}
 }
-
