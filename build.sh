@@ -33,7 +33,7 @@ build() {
     export GOARCH=$GOARCH
 
     # 构建可执行文件
-    go build -o "${RELEASE_DIR}/${PROJECT_NAME}_${PLATFORM}_${VERSION}${EXTENSION}"
+    go build -o "${RELEASE_DIR}/${PROJECT_NAME}_${VERSION}_${PLATFORM}${EXTENSION}"
 
 
     # 检查编译是否成功
@@ -64,10 +64,10 @@ cat > "$RELEASE_DIR/release_info.md" << EOF
 
 ## 下载
 
-- Linux (amd64): [${PROJECT_NAME}_linux_amd64_${VERSION}](${PROJECT_NAME}_linux_amd64_${VERSION})
-- Windows (amd64): [${PROJECT_NAME}_windows_amd64_${VERSION}.exe](${PROJECT_NAME}_windows_amd64_${VERSION}.exe)
-- macOS (amd64): [${PROJECT_NAME}_darwin_amd64_${VERSION}](${PROJECT_NAME}_darwin_amd64_${VERSION})
-- macOS (arm64): [${PROJECT_NAME}_darwin_arm64_${VERSION}](${PROJECT_NAME}_darwin_arm64_${VERSION})
+- Linux (amd64): [${PROJECT_NAME}_${VERSION}_linux_amd64](${PROJECT_NAME}_${VERSION}_linux_amd64)
+- Windows (amd64): [${PROJECT_NAME}_${VERSION}_windows_amd64](${PROJECT_NAME}_${VERSION}_windows_amd64)
+- macOS (amd64): [${PROJECT_NAME}_${VERSION}_darwin_amd64](${PROJECT_NAME}_${VERSION}_darwin_amd64)
+- macOS (arm64): [${PROJECT_NAME}_${VERSION}_darwin_arm64](${PROJECT_NAME}_${VERSION}_darwin_arm64)
 
 ## 安装说明
 
