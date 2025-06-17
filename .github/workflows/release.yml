@@ -35,9 +35,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/*.tar.gz
-            release/*.zip
-            release/release_info.md
+            release/*
           body_path: release/release_info.md
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

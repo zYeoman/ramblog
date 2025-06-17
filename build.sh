@@ -32,34 +32,17 @@ build() {
     export GOOS=$GOOS
     export GOARCH=$GOARCH
 
-    # 创建平台特定的发布目录
-    local PLATFORM_RELEASE_DIR="${RELEASE_DIR}/${PROJECT_NAME}_${VERSION}_${PLATFORM}"
-    mkdir -p "$PLATFORM_RELEASE_DIR"
-
     # 构建可执行文件
-    go build -o "$PLATFORM_RELEASE_DIR/${PROJECT_NAME}${EXTENSION}"
+    go build -o "${RELEASE_DIR}/${PROJECT_NAME}_${PLATFORM}_${VERSION}${EXTENSION}"
 
-    # 复制 Next.js 静态文件
-    cp -r ../out "$PLATFORM_RELEASE_DIR/static"
-
-    # 创建发布包
-    cd "$RELEASE_DIR"
-    if [ "$GOOS" = "windows" ]; then
-        zip -r "${PROJECT_NAME}_${VERSION}_${PLATFORM}.zip" "${PROJECT_NAME}_${VERSION}_${PLATFORM}"
-    else
-        tar -czf "${PROJECT_NAME}_${VERSION}_${PLATFORM}.tar.gz" "${PROJECT_NAME}_${VERSION}_${PLATFORM}"
-    fi
 
     # 检查编译是否成功
     if [ $? -eq 0 ]; then
-        echo "✅ $GOOS/$GOARCH 编译和打包成功: ${PROJECT_NAME}_${VERSION}_${PLATFORM}.tar.gz"
+        echo "✅ $GOOS/$GOARCH 编译和打包成功"
     else
         echo "❌ $GOOS/$GOARCH 编译或打包失败"
         exit 1
     fi
-
-    # 清理临时目录
-    rm -rf "${PROJECT_NAME}_${VERSION}_${PLATFORM}"
 
     # 恢复环境变量
     unset GOOS
@@ -81,23 +64,16 @@ cat > "$RELEASE_DIR/release_info.md" << EOF
 
 ## 下载
 
-- Linux (amd64): [${PROJECT_NAME}_${VERSION}_linux_amd64.tar.gz](${PROJECT_NAME}_${VERSION}_linux_amd64.tar.gz)
-- Windows (amd64): [${PROJECT_NAME}_${VERSION}_windows_amd64.zip](${PROJECT_NAME}_${VERSION}_windows_amd64.zip)
-- macOS (amd64): [${PROJECT_NAME}_${VERSION}_darwin_amd64.tar.gz](${PROJECT_NAME}_${VERSION}_darwin_amd64.tar.gz)
-- macOS (arm64): [${PROJECT_NAME}_${VERSION}_darwin_arm64.tar.gz](${PROJECT_NAME}_${VERSION}_darwin_arm64.tar.gz)
+- Linux (amd64): [${PROJECT_NAME}_linux_amd64_${VERSION}](${PROJECT_NAME}_linux_amd64_${VERSION})
+- Windows (amd64): [${PROJECT_NAME}_windows_amd64_${VERSION}.exe](${PROJECT_NAME}_windows_amd64_${VERSION}.exe)
+- macOS (amd64): [${PROJECT_NAME}_darwin_amd64_${VERSION}](${PROJECT_NAME}_darwin_amd64_${VERSION})
+- macOS (arm64): [${PROJECT_NAME}_darwin_arm64_${VERSION}](${PROJECT_NAME}_darwin_arm64_${VERSION})
 
 ## 安装说明
 
-1. 下载对应平台的压缩包
-2. 解压文件
-3. 运行可执行文件 \`${PROJECT_NAME}\` (Windows 下为 \`${PROJECT_NAME}.exe\`)
-4. 访问 http://localhost:3000 查看应用
+1. 下载运行可执行文件
+2. 访问 http://localhost:8080 查看
 
-## 文件说明
-
-每个发布包包含：
-- 可执行文件
-- 静态文件（位于 static 目录）
 EOF
 
 echo "所有平台编译和打包完成！"

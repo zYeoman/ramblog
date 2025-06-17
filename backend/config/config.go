@@ -9,7 +9,6 @@ import (
 type Config struct {
 	ServerAddr string // 服务器地址
 	DataDir    string // 数据目录
-	StaticDir  string // 静态文件目录
 }
 
 // LoadConfig 从环境变量或默认值加载配置
@@ -37,33 +36,8 @@ func LoadConfig() *Config {
 		serverAddr = ":8080"
 	}
 
-	// 获取静态文件目录，默认为 ../out
-	staticDir := os.Getenv("MEMO_STATIC_DIR")
-	if staticDir == "" {
-		// 尝试找到out目录
-		possibleDirs := []string{
-			"./static",
-			"../out",    // 相对于backend目录
-			"./out",     // 相对于当前目录
-			"../../out", // 再上一级
-		}
-
-		for _, dir := range possibleDirs {
-			if _, err := os.Stat(dir); err == nil {
-				staticDir = dir
-				break
-			}
-		}
-
-		// 如果找不到，默认使用 ../out
-		if staticDir == "" {
-			staticDir = "./"
-		}
-	}
-
 	return &Config{
 		ServerAddr: serverAddr,
 		DataDir:    dataDir,
-		StaticDir:  staticDir,
 	}
 }

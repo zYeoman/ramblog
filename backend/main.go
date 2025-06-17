@@ -1,9 +1,9 @@
 package main
 
 import (
+	"io/fs"
 	"log"
-	"os"
-	"path/filepath"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -46,45 +46,47 @@ func main() {
 		api.RegisterRoutes(apiGroup, memoStore)
 	}
 
-	// 检查前端静态文件目录是否存在
-	staticDir := cfg.StaticDir
-	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
-		log.Printf("警告: 静态文件目录 '%s' 不存在", staticDir)
-	} else {
-		// 设置静态文件处理中间件
-		r.Use(func(c *gin.Context) {
-			// 如果是API请求，跳过静态文件处理
-			if strings.HasPrefix(c.Request.URL.Path, "/api/") {
-				c.Next()
-				return
-			}
-
-			// 尝试提供静态文件
-			filePath := filepath.Join(staticDir, c.Request.URL.Path)
-			if info, err := os.Stat(filePath); err == nil && !info.IsDir() {
-				c.File(filePath)
-				c.Abort()
-				return
-			}
-
-			// 如果是GET请求且不是静态文件，尝试提供index.html（SPA支持）
-			if c.Request.Method == "GET" {
-				indexPath := filepath.Join(staticDir, "index.html")
-				if _, err := os.Stat(indexPath); err == nil {
-					c.File(indexPath)
-					c.Abort()
-					return
-				}
-			}
-
-			// 继续处理请求
-			c.Next()
-		})
+	// 创建静态文件子文件系统
+	subFS, err := fs.Sub(StaticFiles, "out")
+	if err != nil {
+		log.Fatalf("无法创建静态文件子文件系统: %v", err)
 	}
+
+	// 设置静态文件处理中间件
+	r.Use(func(c *gin.Context) {
+		// 如果是API请求，跳过静态文件处理
+		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			c.Next()
+			return
+		}
+
+		// 尝试提供静态文件
+		filePath := strings.TrimPrefix(c.Request.URL.Path, "/")
+		if filePath == "" {
+			filePath = "index.html"
+		}
+
+		// 检查文件是否存在
+		if _, err := subFS.Open(filePath); err == nil {
+			// 使用 http.FileServer 提供静态文件
+			http.FileServer(http.FS(subFS)).ServeHTTP(c.Writer, c.Request)
+			c.Abort()
+			return
+		}
+
+		// 如果文件不存在，返回 index.html（SPA支持）
+		if c.Request.Method == "GET" {
+			c.FileFromFS("index.html", http.FS(subFS))
+			c.Abort()
+			return
+		}
+
+		// 继续处理请求
+		c.Next()
+	})
 
 	// 启动服务器
 	log.Printf("服务器启动在 %s\n", cfg.ServerAddr)
-	log.Printf("静态文件目录: %s\n", staticDir)
 	if err := r.Run(cfg.ServerAddr); err != nil {
 		log.Fatalf("服务器启动失败: %v", err)
 	}
