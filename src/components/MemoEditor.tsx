@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiSave, FiCheck, FiTag, FiX, FiPaperclip, FiImage, FiTrash2 } from 'react-icons/fi';
 import { Tag, Memo } from '../types';
 import { useConfig } from '../utils/ConfigContext';
+import { apiUpload } from '../utils/storageUtils';
 
 interface MemoEditorProps {
   tags: Tag[];
@@ -37,6 +38,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
   const tagDropdownRef = useRef<HTMLDivElement>(null);
   const { config } = useConfig();
   const [showUploadTip, setShowUploadTip] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // 当编辑的备忘录发生变化时，更新表单内容
   useEffect(() => {
@@ -187,6 +189,89 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
     setFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // 处理粘贴事件
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    if (!config.api.enabled) {
+      setShowUploadTip(true);
+      setTimeout(() => setShowUploadTip(false), 2000);
+      return;
+    }
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          imageFiles.push(file);
+        }
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      e.preventDefault(); // 阻止默认粘贴行为
+
+      for (const file of imageFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const res = await apiUpload('/api/upload', formData);
+
+          if (!res.ok) throw new Error('上传失败');
+
+          const data = await res.json();
+          setImages((prev) => [...prev, { name: data.name || file.name, url: data.url, type: file.type }]);
+        } catch (err) {
+          alert('图片上传失败: ' + (err instanceof Error ? err.message : '未知错误'));
+        }
+      }
+    }
+  };
+
+  // 处理拖拽事件
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!config.api.enabled) return;
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (!config.api.enabled) {
+      setShowUploadTip(true);
+      setTimeout(() => setShowUploadTip(false), 2000);
+      return;
+    }
+
+    const files = Array.from(e.dataTransfer.files).filter((file) => file.type.startsWith('image/'));
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await apiUpload('/api/upload', formData);
+        if (!res.ok) throw new Error('上传失败');
+        const data = await res.json();
+        setImages((prev) => [...prev, { name: data.name || file.name, url: data.url, type: file.type }]);
+      } catch (err) {
+        alert('图片上传失败: ' + (err instanceof Error ? err.message : '未知错误'));
+      }
+    }
+  };
+
   // 内联编辑器内容
   const editorContent = (
     <>
@@ -210,11 +295,22 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="写下你的想法... (支持Markdown语法)"
-            className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all font-mono text-sm"
+            onPaste={handlePaste}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            placeholder="写下你的想法..."
+            className={`w-full p-4 border ${
+              isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+            } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all font-mono text-sm`}
             rows={4}
             disabled={isSubmitting}
           />
+          {isDragging && (
+            <div className="absolute inset-0 flex items-center justify-center bg-blue-50 bg-opacity-50 rounded-lg pointer-events-none">
+              <div className="text-blue-500 text-sm font-medium">拖放图片到这里</div>
+            </div>
+          )}
           <AnimatePresence>
             {showSuccess && (
               <motion.div
@@ -238,23 +334,38 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
         {/* 已选标签展示 */}
         {selectedTags.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
-            {tags.filter(tag => selectedTags.includes(tag.id)).map(tag => (
-              <span key={tag.id} className="flex items-center px-2 py-0.5 rounded-full text-xs text-white" style={{ background: tag.color }}>
-                {tag.name}
-                <button type="button" className="ml-1 text-white hover:text-gray-200" onClick={() => handleTagToggle(tag.id)}>
-                  <FiX className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
+            {tags
+              .filter((tag) => selectedTags.includes(tag.id))
+              .map((tag) => (
+                <span
+                  key={tag.id}
+                  className="flex items-center px-2 py-0.5 rounded-full text-xs text-white"
+                  style={{ background: tag.color }}
+                >
+                  {tag.name}
+                  <button
+                    type="button"
+                    className="ml-1 text-white hover:text-gray-200"
+                    onClick={() => handleTagToggle(tag.id)}
+                  >
+                    <FiX className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
           </div>
         )}
         {/* 图片预览区 */}
         {images.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {images.map((att, idx) => (
-              <div key={att.url} className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs">
+              <div
+                key={att.url}
+                className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs"
+              >
                 <img src={att.url} alt={att.name} className="w-8 h-8 object-cover rounded mr-2" />
-                <span className="truncate max-w-[100px]" title={att.name}>{att.name}</span>
+                <span className="truncate max-w-[100px]" title={att.name}>
+                  {att.name}
+                </span>
                 <button
                   type="button"
                   className="ml-2 text-blue-500 hover:underline"
@@ -279,9 +390,14 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
         {files.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {files.map((att, idx) => (
-              <div key={att.url} className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs">
+              <div
+                key={att.url}
+                className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs"
+              >
                 <FiPaperclip className="mr-1 text-gray-400" />
-                <span className="truncate max-w-[100px]" title={att.name}>{att.name}</span>
+                <span className="truncate max-w-[100px]" title={att.name}>
+                  {att.name}
+                </span>
                 <button
                   type="button"
                   className="ml-2 text-blue-500 hover:underline"
@@ -331,7 +447,11 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
                       <button
                         key={tag.id}
                         type="button"
-                        className={`flex items-center w-full px-2 py-1 rounded text-sm mb-1 ${selectedTags.includes(tag.id) ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-700'}`}
+                        className={`flex items-center w-full px-2 py-1 rounded text-sm mb-1 ${
+                          selectedTags.includes(tag.id)
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'hover:bg-gray-100 text-gray-700'
+                        }`}
                         style={{ borderLeft: `4px solid ${tag.color}` }}
                         onClick={() => handleTagToggle(tag.id)}
                       >
@@ -339,7 +459,10 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
                           <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                         )}
                         {!selectedTags.includes(tag.id) && (
-                          <span className="inline-block w-2 h-2 rounded-full mr-2" style={{ background: tag.color }}></span>
+                          <span
+                            className="inline-block w-2 h-2 rounded-full mr-2"
+                            style={{ background: tag.color }}
+                          ></span>
                         )}
                         {tag.name}
                       </button>
@@ -379,10 +502,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
                     const formData = new FormData();
                     formData.append('file', file);
                     try {
-                      const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: formData,
-                      });
+                      const res = await apiUpload('/api/upload', formData);
                       if (!res.ok) throw new Error('上传失败');
                       const data = await res.json();
                       if (file.type.startsWith('image/')) {
@@ -391,10 +511,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
                           { name: data.name || file.name, url: data.url, type: file.type },
                         ]);
                       } else {
-                        setFiles((prev) => [
-                          ...prev,
-                          { name: data.name || file.name, url: data.url, type: file.type },
-                        ]);
+                        setFiles((prev) => [...prev, { name: data.name || file.name, url: data.url, type: file.type }]);
                       }
                     } catch (err) {
                       alert('文件上传失败: ' + (err instanceof Error ? err.message : '未知错误'));
@@ -416,8 +533,12 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
           <motion.button
             type="submit"
             disabled={!content.trim() || isSubmitting}
-            className={`px-3 py-1.5 rounded text-sm text-white flex items-center shadow-sm ${content.trim() && !isSubmitting ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300 cursor-not-allowed'}`}
-            whileHover={content.trim() && !isSubmitting ? { y: -2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } : {}}
+            className={`px-3 py-1.5 rounded text-sm text-white flex items-center shadow-sm ${
+              content.trim() && !isSubmitting ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300 cursor-not-allowed'
+            }`}
+            whileHover={
+              content.trim() && !isSubmitting ? { y: -2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } : {}
+            }
             whileTap={content.trim() && !isSubmitting ? { scale: 0.98 } : {}}
           >
             {isSubmitting ? (

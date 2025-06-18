@@ -14,6 +14,19 @@ const getConfig = () => {
   return ConfigManager.getInstance().getConfig();
 };
 
+export const apiUpload = async (endpoint: string, data?: any) => {
+  const config = getConfig();
+  if (!config || !config.api.enabled) {
+    throw new Error('API未启用');
+  }
+
+  const url = `${config.api.baseUrl}${endpoint}`;
+  return await fetch(url, {
+    method: 'POST',
+    body: data,
+  });
+};
+
 // API请求函数
 const apiRequest = async (endpoint: string, method: string = 'GET', data?: any) => {
   const config = getConfig();
