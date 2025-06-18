@@ -1,7 +1,10 @@
 package api
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"ramblog-app/backend/store"
@@ -35,6 +38,12 @@ func RegisterRoutes(r *gin.RouterGroup, store *store.MemoStore) {
 
 	// 标签路由
 	r.GET("/tags", handler.ListTags)
+
+	// 文件上传路由
+	r.POST("/upload", handler.UploadFile)
+
+	// 设置静态文件服务
+	r.Static("/uploads", store.GetStaticDir())
 }
 
 // ListMemos 列出所有备忘录
@@ -79,7 +88,7 @@ func (h *MemoHandler) GetMemo(c *gin.Context) {
 // UpdateMemo 更新备忘录
 func (h *MemoHandler) UpdateMemo(c *gin.Context) {
 	id := c.Param("id")
-	
+
 	var updates store.Memo
 	if err := c.ShouldBindJSON(&updates); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -135,4 +144,44 @@ func (h *MemoHandler) ListTags(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, tags)
-} 
+}
+
+// UploadFile 处理文件上传
+func (h *MemoHandler) UploadFile(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "未收到文件"})
+		return
+	}
+
+	// 使用 h.store 存储文件
+	fileData, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法打开上传的文件"})
+		return
+	}
+	defer fileData.Close()
+
+	data, err := io.ReadAll(fileData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取文件内容失败"})
+		return
+	}
+
+	attachmentID := fmt.Sprintf("%d_%s", time.Now().UnixNano(), file.Filename)
+	attachment := &store.Attachment{
+		ID:   attachmentID,
+		Data: data,
+	}
+	if err := h.store.CreateAttachment(attachment); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "存储文件失败: " + err.Error()})
+		return
+	}
+
+	url := fmt.Sprintf("/api/uploads/%s", attachmentID)
+
+	c.JSON(http.StatusOK, gin.H{
+		"url":  url,
+		"name": file.Filename,
+	})
+}

@@ -26,15 +26,18 @@ type MemoStore struct {
 
 // NewMemoStore 创建一个新的备忘录存储
 func NewMemoStore(dataDir string) (*MemoStore, error) {
-	// 确保memos目录存在
-	memosDir := filepath.Join(dataDir, "memos")
-	if err := os.MkdirAll(memosDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return nil, fmt.Errorf("无法创建memos目录: %w", err)
 	}
 
 	store := &MemoStore{
 		dataDir:        dataDir,
 		maxNumberCache: make(map[string]int),
+	}
+
+	staticDir := store.GetStaticDir()
+	if err := os.MkdirAll(staticDir, 0755); err != nil {
+		return nil, fmt.Errorf("无法创建static目录: %w", err)
 	}
 
 	// 初始化时扫描一次目录，构建日期到最大序号的映射
@@ -81,12 +84,27 @@ func (s *MemoStore) initMaxNumberCache() error {
 
 // 获取memos目录的路径
 func (s *MemoStore) getMemosDir() string {
-	return filepath.Join(s.dataDir, "memos")
+	return s.dataDir
 }
 
 // 获取特定memo文件的路径
 func (s *MemoStore) getMemoPath(id string) string {
 	return filepath.Join(s.getMemosDir(), id+".md")
+}
+
+// 获取 static 目录的路径
+func (s *MemoStore) getStaticDir() string {
+	return filepath.Join(s.dataDir, "static")
+}
+
+// GetStaticDir 返回静态文件目录的路径
+func (s *MemoStore) GetStaticDir() string {
+	return s.getStaticDir()
+}
+
+// 获取特定附件文件的路径
+func (s *MemoStore) getAttachmentPath(id string) string {
+	return filepath.Join(s.getStaticDir(), id)
 }
 
 // 生成新的备忘录ID，格式为 YYYY-MM-DD-Number
@@ -274,6 +292,20 @@ func (s *MemoStore) ListMemos() ([]*Memo, error) {
 	return memos, nil
 }
 
+func (s *MemoStore) CreateAttachment(attachment *Attachment) error {
+	attachmentPath := s.getAttachmentPath(attachment.ID)
+	// 检查文件是否存在
+	if _, err := os.Stat(attachmentPath); err == nil {
+		return fmt.Errorf("附件已存在: %s", attachment.ID)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("检查附件文件失败: %w", err)
+	}
+	if err := os.WriteFile(attachmentPath, attachment.Data, 0644); err != nil {
+		return fmt.Errorf("写入附件文件失败: %w", err)
+	}
+	return nil
+}
+
 // 从文件中读取memo
 func (s *MemoStore) readMemoFromFile(id string) (*Memo, error) {
 	memoPath := s.getMemoPath(id)
@@ -392,4 +424,3 @@ func formatMemoFile(memo *Memo) ([]byte, error) {
 
 	return []byte(content.String()), nil
 }
-

@@ -22,3 +22,9 @@ type MemoMetadata struct {
 	CreatedAt time.Time `yaml:"created_at"`
 	UpdatedAt time.Time `yaml:"updated_at"`
 } 
+
+// Attachment 表示附件
+type Attachment struct {
+	ID   string `json:"id"`
+	Data []byte `json:"data"`
+}

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSave, FiCheck, FiTag, FiX } from 'react-icons/fi';
+import { FiSave, FiCheck, FiTag, FiX, FiPaperclip, FiImage, FiTrash2 } from 'react-icons/fi';
 import { Tag, Memo } from '../types';
+import { useConfig } from '../utils/ConfigContext';
 
 interface MemoEditorProps {
   tags: Tag[];
@@ -28,6 +29,14 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [images, setImages] = useState<{ name: string; url: string; type: string }[]>([]);
+  const [files, setFiles] = useState<{ name: string; url: string; type: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const tagButtonRef = useRef<HTMLButtonElement>(null);
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
+  const { config } = useConfig();
+  const [showUploadTip, setShowUploadTip] = useState(false);
 
   // 当编辑的备忘录发生变化时，更新表单内容
   useEffect(() => {
@@ -94,6 +103,23 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
     };
   }, [isModal, isOpen, onClose]);
 
+  // 点击外部关闭标签下拉
+  useEffect(() => {
+    if (!showTagDropdown) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tagDropdownRef.current &&
+        !tagDropdownRef.current.contains(event.target as Node) &&
+        tagButtonRef.current &&
+        !tagButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowTagDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showTagDropdown]);
+
   const handleTagToggle = (tagId: string) => {
     setSelectedTags((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]));
   };
@@ -142,15 +168,31 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
     }
   };
 
+  // 插入图片/附件到内容
+  const handleInsertAttachment = (att: { name: string; url: string; type: string }) => {
+    let insertText = '';
+    if (att.type.startsWith('image/')) {
+      insertText = `![${att.name}](${att.url})`;
+    } else {
+      insertText = `[${att.name}](${att.url})`;
+    }
+    setContent((prev) => (prev ? prev + '\n' + insertText : insertText));
+  };
+
+  // 移除图片/附件
+  const handleRemoveImage = (idx: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+  };
+  const handleRemoveFile = (idx: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   // 内联编辑器内容
   const editorContent = (
     <>
-      <div className={`${isModal ? 'p-6 overflow-y-auto flex-grow' : 'p-6'}`}>
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center">
-            <h3 className="text-lg font-medium text-gray-800">{editingMemo ? '编辑备忘录' : '添加备忘录'}</h3>
-          </div>
-          {((editingMemo && onCancelEdit && !isModal) || (isModal && onClose)) && (
+      <div className={`${isModal ? 'p-2 overflow-y-auto flex-grow' : 'p-2'}`}>
+        {((editingMemo && onCancelEdit && !isModal) || (isModal && onClose)) && (
+          <div className="flex justify-end items-center mb-3">
             <motion.button
               type="button"
               onClick={handleCancel}
@@ -160,10 +202,10 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             >
               <FiX className="w-5 h-5" />
             </motion.button>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className="mb-4 relative">
+        <div className="relative">
           <textarea
             ref={textareaRef}
             value={content}
@@ -173,7 +215,6 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             rows={4}
             disabled={isSubmitting}
           />
-
           <AnimatePresence>
             {showSuccess && (
               <motion.div
@@ -194,84 +235,189 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             )}
           </AnimatePresence>
         </div>
-
-        {tags.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mb-10" // 添加底部边距，为保存按钮留出空间
-          >
-            <div className="flex items-center text-sm text-gray-500 mb-2">
-              <FiTag className="mr-1" />
-              <p>选择标签：</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag, index) => (
-                <motion.button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => handleTagToggle(tag.id)}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 + index * 0.05 }}
-                  whileHover={{ y: -2 }}
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    selectedTags.includes(tag.id)
-                      ? 'text-white shadow-sm'
-                      : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                  style={{
-                    backgroundColor: selectedTags.includes(tag.id) ? tag.color : undefined,
-                  }}
-                >
-                  <div className="flex items-center">
-                    {selectedTags.includes(tag.id) ? (
-                      <motion.svg
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="w-2.5 h-2.5 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-                      </motion.svg>
-                    ) : (
-                      <span className="w-2.5 h-2.5 mr-1 rounded-full" style={{ backgroundColor: tag.color }}></span>
-                    )}
-                    {tag.name}
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
+        {/* 已选标签展示 */}
+        {selectedTags.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {tags.filter(tag => selectedTags.includes(tag.id)).map(tag => (
+              <span key={tag.id} className="flex items-center px-2 py-0.5 rounded-full text-xs text-white" style={{ background: tag.color }}>
+                {tag.name}
+                <button type="button" className="ml-1 text-white hover:text-gray-200" onClick={() => handleTagToggle(tag.id)}>
+                  <FiX className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
         )}
-      </div>
-
-      {/* 模态框底部按钮 */}
-      {isModal && (
-        <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
-          <motion.button
-            type="button"
-            onClick={handleCancel}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-4 py-2 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-200"
-          >
-            取消
-          </motion.button>
-
+        {/* 图片预览区 */}
+        {images.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {images.map((att, idx) => (
+              <div key={att.url} className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs">
+                <img src={att.url} alt={att.name} className="w-8 h-8 object-cover rounded mr-2" />
+                <span className="truncate max-w-[100px]" title={att.name}>{att.name}</span>
+                <button
+                  type="button"
+                  className="ml-2 text-blue-500 hover:underline"
+                  onClick={() => handleInsertAttachment(att)}
+                  title="插入到内容"
+                >
+                  插入
+                </button>
+                <button
+                  type="button"
+                  className="ml-1 text-gray-400 hover:text-red-500"
+                  onClick={() => handleRemoveImage(idx)}
+                  title="移除"
+                >
+                  <FiTrash2 />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* 附件区 */}
+        {files.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {files.map((att, idx) => (
+              <div key={att.url} className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs">
+                <FiPaperclip className="mr-1 text-gray-400" />
+                <span className="truncate max-w-[100px]" title={att.name}>{att.name}</span>
+                <button
+                  type="button"
+                  className="ml-2 text-blue-500 hover:underline"
+                  onClick={() => handleInsertAttachment(att)}
+                  title="插入到内容"
+                >
+                  插入
+                </button>
+                <button
+                  type="button"
+                  className="ml-1 text-gray-400 hover:text-red-500"
+                  onClick={() => handleRemoveFile(idx)}
+                  title="移除"
+                >
+                  <FiTrash2 />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* 操作按钮区和保存按钮同一行，两端对齐 */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-1 z-10">
+            {/* 标签选择按钮 */}
+            <div className="relative">
+              <button
+                ref={tagButtonRef}
+                type="button"
+                className="flex items-center px-1.5 py-1 rounded hover:bg-gray-100 text-gray-700 text-base"
+                onClick={() => setShowTagDropdown((v) => !v)}
+                title="选择标签"
+              >
+                <FiTag className="mr-0.5" />
+              </button>
+              <AnimatePresence>
+                {showTagDropdown && (
+                  <motion.div
+                    ref={tagDropdownRef}
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 mt-2 z-50 bg-white border border-gray-200 rounded shadow-lg min-w-[160px] p-2"
+                  >
+                    {tags.length === 0 && <div className="text-gray-400 text-sm px-2 py-1">暂无标签</div>}
+                    {tags.map((tag) => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        className={`flex items-center w-full px-2 py-1 rounded text-sm mb-1 ${selectedTags.includes(tag.id) ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-700'}`}
+                        style={{ borderLeft: `4px solid ${tag.color}` }}
+                        onClick={() => handleTagToggle(tag.id)}
+                      >
+                        {selectedTags.includes(tag.id) && (
+                          <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                        )}
+                        {!selectedTags.includes(tag.id) && (
+                          <span className="inline-block w-2 h-2 rounded-full mr-2" style={{ background: tag.color }}></span>
+                        )}
+                        {tag.name}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {/* 合并后的上传按钮 */}
+            <div className="relative">
+              <button
+                type="button"
+                className="flex items-center px-1.5 py-1 rounded hover:bg-gray-100 text-gray-700 text-base"
+                onClick={() => {
+                  if (!config.api.enabled) {
+                    setShowUploadTip(true);
+                    setTimeout(() => setShowUploadTip(false), 2000);
+                  } else {
+                    fileInputRef.current?.click();
+                  }
+                }}
+                title="上传图片或文件"
+              >
+                <FiImage className="mr-0.5" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="*"
+                style={{ display: 'none' }}
+                multiple
+                onChange={async (e) => {
+                  if (!config.api.enabled) return;
+                  const files = e.target.files;
+                  if (!files) return;
+                  const uploaders = Array.from(files).map(async (file) => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    try {
+                      const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
+                      });
+                      if (!res.ok) throw new Error('上传失败');
+                      const data = await res.json();
+                      if (file.type.startsWith('image/')) {
+                        setImages((prev) => [
+                          ...prev,
+                          { name: data.name || file.name, url: data.url, type: file.type },
+                        ]);
+                      } else {
+                        setFiles((prev) => [
+                          ...prev,
+                          { name: data.name || file.name, url: data.url, type: file.type },
+                        ]);
+                      }
+                    } catch (err) {
+                      alert('文件上传失败: ' + (err instanceof Error ? err.message : '未知错误'));
+                    }
+                  });
+                  await Promise.all(uploaders);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+              />
+              {/* 自定义气泡提示 */}
+              {showUploadTip && (
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded shadow z-50 whitespace-nowrap">
+                  当前未启用API，暂不支持上传
+                </div>
+              )}
+            </div>
+          </div>
+          {/* 保存按钮 */}
           <motion.button
             type="submit"
             disabled={!content.trim() || isSubmitting}
-            className={`px-5 py-2 rounded-lg text-white flex items-center ${
-              content.trim() && !isSubmitting ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300 cursor-not-allowed'
-            }`}
-            whileHover={
-              content.trim() && !isSubmitting ? { y: -2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } : {}
-            }
+            className={`px-3 py-1.5 rounded text-sm text-white flex items-center shadow-sm ${content.trim() && !isSubmitting ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300 cursor-not-allowed'}`}
+            whileHover={content.trim() && !isSubmitting ? { y: -2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } : {}}
             whileTap={content.trim() && !isSubmitting ? { scale: 0.98 } : {}}
           >
             {isSubmitting ? (
@@ -296,51 +442,12 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             ) : (
               <>
                 <FiSave className="mr-1" />
-                保存
+                {editingMemo ? '更新' : '保存'}
               </>
             )}
           </motion.button>
         </div>
-      )}
-
-      {/* 非模态框保存按钮 - 位于整个编辑框内部的右下角 */}
-      {!isModal && (
-        <motion.button
-          type="submit"
-          disabled={!content.trim() || isSubmitting}
-          className={`absolute bottom-4 right-4 px-4 py-2 rounded-lg text-white flex items-center shadow-sm ${
-            content.trim() && !isSubmitting ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300 cursor-not-allowed'
-          }`}
-          whileHover={content.trim() && !isSubmitting ? { y: -2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } : {}}
-          whileTap={content.trim() && !isSubmitting ? { scale: 0.98 } : {}}
-        >
-          {isSubmitting ? (
-            <span className="flex items-center">
-              <motion.span
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="mr-2 inline-block"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 9.27455 20.9097 6.80375 19.1414 5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </motion.span>
-              保存中...
-            </span>
-          ) : (
-            <>
-              <FiSave className="mr-1" />
-              {editingMemo ? '更新' : '保存'}
-            </>
-          )}
-        </motion.button>
-      )}
+      </div>
     </>
   );
 
@@ -361,7 +468,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+              className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col"
             >
               <form onSubmit={handleSubmit}>{editorContent}</form>
             </motion.div>
@@ -378,7 +485,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 100 }}
-      className="bg-white rounded-lg shadow-sm mb-6 overflow-hidden relative"
+      className="bg-white rounded-lg shadow-sm mb-6 relative"
     >
       {editorContent}
     </motion.form>

@@ -22,6 +22,11 @@ func main() {
 		log.Fatalf("无法初始化存储: %v", err)
 	}
 
+	// 设置Gin模式
+	if !cfg.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	// 设置Gin路由
 	r := gin.Default()
 
@@ -87,6 +92,8 @@ func main() {
 
 	// 启动服务器
 	log.Printf("服务器启动在 %s\n", cfg.ServerAddr)
+	log.Printf("数据目录: %s\n", cfg.DataDir)
+	log.Printf("调试模式: %v\n", cfg.Debug)
 	if err := r.Run(cfg.ServerAddr); err != nil {
 		log.Fatalf("服务器启动失败: %v", err)
 	}
