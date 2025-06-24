@@ -66,12 +66,13 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
       // 检查是否以 "- " 或 "- [ ] " 开头
       const isDashList = currentLine.startsWith('- ');
       const isCheckboxList = currentLine.startsWith('- [ ] ');
+      const numberMatch = currentLine.match(/^(\d+)\.\s/);
 
-      if (isDashList || isCheckboxList) {
+      if (isDashList || isCheckboxList || numberMatch) {
         e.preventDefault();
 
         // 获取当前行的前缀（"- " 或 "- [ ] "）
-        const prefix = isCheckboxList ? '- [ ] ' : '- ';
+        const prefix = isCheckboxList ? '- [ ] ' : numberMatch ? `${parseInt(numberMatch[1]) + 1}. ` : '- ';
 
         // 检查当前行是否有内容（除了前缀和空格）
         const lineContent = currentLine.substring(prefix.length).trim();
