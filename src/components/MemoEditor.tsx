@@ -40,6 +40,69 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
   const [showUploadTip, setShowUploadTip] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // 处理键盘事件
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const value = textarea.value;
+
+      // 获取当前行的开始位置
+      let lineStart = start;
+      while (lineStart > 0 && value[lineStart - 1] !== '\n') {
+        lineStart--;
+      }
+
+      // 获取当前行的结束位置
+      let lineEnd = end;
+      while (lineEnd < value.length && value[lineEnd] !== '\n') {
+        lineEnd++;
+      }
+
+      // 获取当前行的内容
+      const currentLine = value.substring(lineStart, lineEnd);
+
+      // 检查是否以 "- " 或 "- [ ] " 开头
+      const isDashList = currentLine.startsWith('- ');
+      const isCheckboxList = currentLine.startsWith('- [ ] ');
+
+      if (isDashList || isCheckboxList) {
+        e.preventDefault();
+
+        // 获取当前行的前缀（"- " 或 "- [ ] "）
+        const prefix = isCheckboxList ? '- [ ] ' : '- ';
+
+        // 检查当前行是否有内容（除了前缀和空格）
+        const lineContent = currentLine.substring(prefix.length).trim();
+
+        if (lineContent === '') {
+          // 如果当前行没有内容，删除当前行
+          const newValue = value.substring(0, lineStart) + value.substring(lineEnd + 1);
+          setContent(newValue);
+
+          // 设置光标位置到上一行的末尾
+          setTimeout(() => {
+            const newCursorPos = Math.min(lineStart, newValue.length);
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+          }, 0);
+        } else {
+          // 如果当前行有内容，创建新行
+          const beforeCursor = value.substring(0, start);
+          const afterCursor = value.substring(end);
+          const newValue = beforeCursor + '\n' + prefix + afterCursor;
+          setContent(newValue);
+
+          // 设置光标位置到新行的前缀之后
+          setTimeout(() => {
+            const newCursorPos = start + 1 + prefix.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+          }, 0);
+        }
+      }
+    }
+  };
+
   // 当编辑的备忘录发生变化时，更新表单内容
   useEffect(() => {
     if (editingMemo) {
@@ -299,6 +362,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onKeyDown={handleKeyDown}
             placeholder="写下你的想法..."
             className={`w-full p-4 border ${
               isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
