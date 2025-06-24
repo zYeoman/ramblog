@@ -11,6 +11,7 @@ import { formatDate } from '../utils/dateUtils';
 import { editMemo } from '../utils/storageUtils';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import { useConfig } from '../utils/ConfigContext';
 
 interface MemoListProps {
   memos: Memo[];
@@ -31,9 +32,19 @@ const MemoList: React.FC<MemoListProps> = ({
   onArchiveMemo,
   onUpdateMemos,
 }) => {
+  const { config } = useConfig();
+
   // 获取标签对象，通过ID
   const getTagById = (id: string) => {
     return tags.find((tag) => tag.id === id);
+  };
+
+  // 相对路径转换为基于 api 地址的绝对路径
+  const customUrlTransformer = (url: string) => {
+    if (url.startsWith('/static/')) {
+      return `${config.api.baseUrl}${url}`;
+    }
+    return url;
   };
 
   // 自定义复选框组件
@@ -192,6 +203,7 @@ const MemoList: React.FC<MemoListProps> = ({
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[[rehypeKatex, { output: 'mathml' }]]}
+                  urlTransform={customUrlTransformer}
                   components={{
                     code({ inline, className, children, ...props }: any) {
                       const match = /language-(\w+)/.exec(className || '');

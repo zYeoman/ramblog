@@ -427,7 +427,7 @@ const MemoEditor: React.FC<MemoEditorProps> = ({
                 key={att.url}
                 className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs"
               >
-                <img src={att.url} alt={att.name} className="w-8 h-8 object-cover rounded mr-2" />
+                <img src={`${config.api.baseUrl}${att.url}`} alt={att.name} className="w-8 h-8 object-cover rounded mr-2" />
                 <span className="truncate max-w-[100px]" title={att.name}>
                   {att.name}
                 </span>
