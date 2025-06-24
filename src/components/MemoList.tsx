@@ -39,7 +39,7 @@ const MemoList: React.FC<MemoListProps> = ({
   // 自定义复选框组件
   const CustomCheckbox = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
     <span
-      className={`inline-flex justify-center items-center w-4 h-4 mr-2 rounded cursor-pointer transition-all mt-1 ${
+      className={`inline-flex justify-center items-center w-4 h-4 mr-1 cursor-pointer mt-1 ${
         checked ? 'text-blue-500' : 'text-gray-300'
       }`}
       onClick={(e) => {
