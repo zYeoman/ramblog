@@ -61,8 +61,8 @@ export const defaultConfig: AppConfig = {
     transitionSpeed: '0.2s',
   },
   api: {
-    enabled: false,
-    baseUrl: 'http://localhost:8080',
+    enabled: true,
+    baseUrl: '',
     endpoints: {
       memos: '/api/memos',
       tags: '/api/tags',

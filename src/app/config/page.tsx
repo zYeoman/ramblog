@@ -376,7 +376,7 @@ export default function ConfigPage() {
                 onChange={(e) => handleApiChange('baseUrl', e.target.value)}
                 placeholder="例如: http://localhost:8080"
               />
-              <p className="help-text">API服务器的基础URL，不包含端点路径。</p>
+              <p className="help-text">API服务器的基础URL，不包含端点路径。为空即当前页面地址。</p>
             </div>
 
             <div className="form-group">
