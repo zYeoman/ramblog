@@ -41,9 +41,6 @@ func RegisterRoutes(r *gin.RouterGroup, store *store.MemoStore) {
 
 	// 文件上传路由
 	r.POST("/upload", handler.UploadFile)
-
-	// 设置静态文件服务
-	r.Static("/uploads", store.GetStaticDir())
 }
 
 // ListMemos 列出所有备忘录
@@ -178,7 +175,7 @@ func (h *MemoHandler) UploadFile(c *gin.Context) {
 		return
 	}
 
-	url := fmt.Sprintf("/api/uploads/%s", attachmentID)
+	url := fmt.Sprintf("/static/%s", attachmentID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"url":  url,

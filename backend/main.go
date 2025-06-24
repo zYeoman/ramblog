@@ -51,6 +51,9 @@ func main() {
 		api.RegisterRoutes(apiGroup, memoStore)
 	}
 
+	// 设置静态文件服务
+	r.Static("/static", memoStore.GetStaticDir())
+
 	// 创建静态文件子文件系统
 	subFS, err := fs.Sub(StaticFiles, "out")
 	if err != nil {
