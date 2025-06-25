@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -146,7 +147,7 @@ func (s *MemoStore) CreateMemo(memo *Memo) error {
 	memo.ID = id
 
 	// 设置时间戳
-	now := time.Now()
+	now := time.Now().Truncate(time.Second)
 	memo.CreatedAt = now
 	memo.UpdatedAt = now
 
@@ -185,7 +186,7 @@ func (s *MemoStore) UpdateMemo(id string, updates *Memo) error {
 	}
 
 	// 更新时间戳
-	memo.UpdatedAt = time.Now()
+	memo.UpdatedAt = time.Now().Truncate(time.Second)
 
 	// 保存更新后的memo
 	return s.saveMemoToFile(memo)
@@ -261,32 +262,55 @@ func (s *MemoStore) ListMemos() ([]*Memo, error) {
 
 	memos := []*Memo{}
 
-	// 读取memos目录中的所有文件
+	// 存储文件信息
+	var files []struct {
+		Id   string
+		Info fs.FileInfo
+	}
+
+	// 遍历当前目录
 	err := filepath.WalkDir(s.getMemosDir(), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// 跳过目录和非.md文件
-		if d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
+		// 跳过目录和非 Markdown 文件
+		if d.IsDir() || filepath.Ext(path) != ".md" {
 			return nil
 		}
 
-		// 从文件名中提取ID
-		id := strings.TrimSuffix(d.Name(), ".md")
-
-		// 读取memo
-		memo, err := s.readMemoFromFile(id)
+		// 获取文件信息
+		info, err := d.Info()
 		if err != nil {
-			return fmt.Errorf("读取备忘录 %s 失败: %w", id, err)
+			return err
 		}
 
-		memos = append(memos, memo)
+		id := strings.TrimSuffix(d.Name(), ".md")
+		// 存储文件路径和信息
+		files = append(files, struct {
+			Id   string
+			Info fs.FileInfo
+		}{id, info})
+
 		return nil
 	})
 
 	if err != nil {
 		return nil, fmt.Errorf("列出备忘录失败: %w", err)
+	}
+
+	// 按修改时间排序 (从新到旧)
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Info.ModTime().After(files[j].Info.ModTime())
+	})
+
+	// 处理文件 (按修改时间顺序)
+	for _, file := range files {
+		memo, err := s.readMemoFromFile(file.Id)
+		if err != nil {
+			return nil, fmt.Errorf("读取备忘录文件失败: %w", err)
+		}
+		memos = append(memos, memo)
 	}
 
 	return memos, nil
